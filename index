@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>みんかぶ スクリーニングリスト</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F4F0;
+    --surface: #FFFFFF;
+    --surface2: #EEECEA;
+    --border: #DDDBD6;
+    --border2: #E8E6E2;
+    --text: #1A1916;
+    --text2: #6B6860;
+    --text3: #A09E99;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 56px; display: flex; align-items: center;
+    justify-content: space-between; position: sticky; top: 0; z-index: 100;
+  }
+  .header-title { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+  .header-title span { color: var(--text3); font-weight: 400; font-size: 13px; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+
+  .bm-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+  .bm-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .bm-desc { font-size: 12px; color: var(--text2); line-height: 1.7; margin-bottom: 12px; }
+  .bm-link {
+    display: inline-block; padding: 8px 16px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px; font-size: 13px;
+    font-weight: 500; color: var(--text); text-decoration: none; cursor: grab;
+  }
+  .bm-hint { font-size: 11px; color: var(--text3); margin-top: 8px; }
+  .toggle-bm { font-size: 12px; color: var(--text3); background: none; border: none; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; }
+
+  .add-area { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .add-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap input { width: 100%; }
+  .dropdown {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    z-index: 200; max-height: 260px; overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .dd-item { padding: 9px 14px; cursor: pointer; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--border2); transition: background 0.1s; }
+  .dd-item:last-child { border-bottom: none; }
+  .dd-item:hover, .dd-item.active { background: var(--surface2); }
+  .dd-code { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: var(--text2); min-width: 40px; }
+  .dd-name { font-size: 13px; color: var(--text); flex: 1; }
+  .dd-sector { font-size: 11px; color: var(--text3); }
+
+  .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-search { width: 200px; }
+  .filter-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab { font-size: 12px; padding: 5px 12px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border); background: none; color: var(--text2); font-family: 'Noto Sans JP', sans-serif; transition: all 0.15s; }
+  .tab:hover { background: var(--surface2); }
+  .tab.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .clear-btn { margin-left: auto; font-size: 12px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 4px 8px; font-family: 'Noto Sans JP', sans-serif; text-decoration: underline; }
+
+  .stats { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { font-size: 12px; padding: 5px 14px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); white-space: nowrap; }
+  .stat strong { color: var(--text); }
+
+  .toast { display: none; padding: 10px 16px; background: #E8F5E9; border: 1px solid #C8E6C9; border-radius: var(--radius); font-size: 13px; color: #2E7D32; margin-bottom: 16px; }
+
+  .stock-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; box-shadow: var(--shadow); transition: border-color 0.15s; }
+  .stock-item:hover { border-color: #C0BEB9; }
+  .stock-main { display: flex; align-items: center; gap: 12px; padding: 12px 14px; flex-wrap: wrap; }
+  .s-code { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); min-width: 44px; font-weight: 500; }
+  .s-name { flex: 1; font-size: 15px; font-weight: 500; min-width: 80px; }
+  .status-sel { font-size: 12px; padding: 4px 10px; border-radius: 20px; border: none; cursor: pointer; font-weight: 500; font-family: 'Noto Sans JP', sans-serif; appearance: none; -webkit-appearance: none; }
+  .s-date { font-size: 11px; color: var(--text3); min-width: 72px; text-align: right; }
+  .s-link { font-size: 12px; padding: 4px 10px; border-radius: 20px; background: none; border: 1px solid var(--border); cursor: pointer; color: var(--text2); text-decoration: none; font-family: 'Noto Sans JP', sans-serif; transition: background 0.1s; }
+  .s-link:hover { background: var(--surface2); }
+  .s-del { font-size: 12px; padding: 4px 10px; border-radius: 20px; background: none; border: none; cursor: pointer; color: var(--text3); font-family: 'Noto Sans JP', sans-serif; }
+  .s-del:hover { color: #c0392b; }
+  .memo-toggle { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: none; border: 1px solid var(--border); cursor: pointer; color: var(--text3); font-family: 'Noto Sans JP', sans-serif; }
+  .memo-toggle.has { color: #B8860B; border-color: #D4A017; }
+  .memo-area { display: none; padding: 0 14px 12px; }
+  .memo-area.open { display: block; }
+  .memo-input { width: 100%; font-size: 13px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text); resize: vertical; min-height: 60px; font-family: 'Noto Sans JP', sans-serif; }
+  .memo-input:focus { outline: none; border-color: #B0AEA9; }
+
+  input[type=text], select { height: 38px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 13px; font-family: 'Noto Sans JP', sans-serif; outline: none; transition: border-color 0.15s; }
+  input[type=text]:focus { border-color: #B0AEA9; }
+  select { padding: 0 10px; cursor: pointer; }
+  button.primary { height: 38px; padding: 0 18px; background: var(--text); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: 'Noto Sans JP', sans-serif; transition: opacity 0.15s; }
+  button.primary:disabled { opacity: 0.35; cursor: not-allowed; }
+  button.primary:not(:disabled):hover { opacity: 0.8; }
+
+  .empty { text-align: center; padding: 48px 0; color: var(--text3); font-size: 14px; }
+  mark { background: #FEF3C7; color: #92400E; border-radius: 2px; padding: 0 1px; }
+  @media (max-width: 600px) { main { padding: 16px 12px; } .s-date { display: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    みんかぶ スクリーニングリスト
+    <span id="headerCount"></span>
+  </div>
+  <div>
+    <button class="toggle-bm" onclick="toggleBm()">⭐ ブックマークレット設定</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="bm-panel" id="bmPanel" style="display:none;">
+    <div class="bm-title">
+      ブックマークレットの設定
+      <button class="toggle-bm" onclick="toggleBm()">閉じる ✕</button>
+    </div>
+    <div class="bm-desc">
+      下のボタンをブックマークバーにドラッグ＆ドロップしてください。<br>
+      みんかぶの銘柄ページでクリックすると、ステータス確認・追加がこのページに反映されます。<br>
+      <strong>Safari の場合：</strong>ブックマーク登録後、編集画面でURLをコードに貼り替えてください。
+    </div>
+    <a id="bmLink" href="" class="bm-link">⭐ みんかぶに追加</a>
+    <div class="bm-hint">← ブックマークバーへドラッグ（Safari は手動登録）</div>
+    <div style="margin-top:12px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;">Safari用コード（手動貼り付け）</div>
+      <textarea id="bmCode" readonly style="width:100%;height:80px;font-size:11px;font-family:monospace;border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--surface2);color:var(--text2);resize:none;"></textarea>
+      <button onclick="copyBmCode()" style="margin-top:6px;font-size:12px;padding:4px 12px;border-radius:20px;background:none;border:1px solid var(--border);cursor:pointer;font-family:'Noto Sans JP',sans-serif;" id="copyBmBtn">コピー</button>
+    </div>
+  </div>
+
+  <div class="add-area">
+    <div class="add-row">
+      <div class="search-wrap">
+        <input type="text" id="stockSearch" placeholder="銘柄名またはコードで検索..." oninput="onSearchInput()" onkeydown="onSearchKey(event)" autocomplete="off"/>
+        <div class="dropdown" id="dropdown"></div>
+      </div>
+      <select id="statusSelect">
+        <option value="未確認">未確認</option>
+        <option value="確認済">確認済</option>
+        <option value="気になる">気になる</option>
+        <option value="見送り">見送り</option>
+      </select>
+      <button class="primary" id="addBtn" onclick="addSelected()" disabled>追加</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input type="text" class="filter-search" id="filterSearch" placeholder="リストを検索..." oninput="render()"/>
+    <div class="filter-tabs">
+      <button class="tab active" onclick="setFilter('all',this)">すべて</button>
+      <button class="tab" onclick="setFilter('未確認',this)">未確認</button>
+      <button class="tab" onclick="setFilter('気になる',this)">気になる</button>
+      <button class="tab" onclick="setFilter('確認済',this)">確認済</button>
+      <button class="tab" onclick="setFilter('見送り',this)">見送り</button>
+    </div>
+    <button class="clear-btn" onclick="clearAll()">全消去</button>
+  </div>
+
+  <div class="stats" id="statsRow"></div>
+  <div class="toast" id="toast"></div>
+  <div id="listArea"></div>
+  <div class="empty" id="emptyMsg" style="display:none;">銘柄を追加してください</div>
+  <div class="empty" id="noMatch" style="display:none;">該当する銘柄がありません</div>
+
+</main>
+
+<script>
+const STOCKS_DB = [
+  ["1301","極洋","水産・農林"],["1332","日本水産","水産・農林"],["1333","マルハニチロ","水産・農林"],
+  ["1605","INPEX","鉱業"],["1662","石油資源開発","鉱業"],
+  ["1801","大成建設","建設"],["1802","大林組","建設"],["1803","清水建設","建設"],["1808","長谷工","建設"],["1812","鹿島建設","建設"],["1925","大和ハウス","建設"],["1928","積水ハウス","建設"],
+  ["2002","日清製粉G","食品"],["2269","明治HD","食品"],["2282","日本ハム","食品"],["2502","アサヒGHD","食品"],["2503","キリンHD","食品"],["2587","サントリー食品","食品"],["2802","味の素","食品"],["2871","ニチレイ","食品"],["2914","JT","食品"],
+  ["3402","東レ","繊維"],["3861","王子HD","パルプ・紙"],["3863","日本製紙","パルプ・紙"],
+  ["4004","レゾナック","化学"],["4005","住友化学","化学"],["4021","日産化学","化学"],["4042","東ソー","化学"],["4063","信越化学","化学"],["4151","協和キリン","化学"],["4183","三井化学","化学"],["4188","三菱ケミカル","化学"],["4452","花王","化学"],["4502","武田薬品","医薬品"],["4503","アステラス製薬","医薬品"],["4507","塩野義製薬","医薬品"],["4519","中外製薬","医薬品"],["4523","エーザイ","医薬品"],["4568","第一三共","医薬品"],["4578","大塚HD","医薬品"],["4911","資生堂","化学"],
+  ["5001","ENEOS HD","石油"],["5101","横浜ゴム","ゴム"],["5108","ブリヂストン","ゴム"],
+  ["5201","AGC","ガラス・土石"],["5332","TOTO","ガラス・土石"],["5401","日本製鉄","鉄鋼"],["5406","神戸製鋼所","鉄鋼"],["5411","JFE HD","鉄鋼"],
+  ["5713","住友金属鉱山","非鉄"],["5802","住友電工","非鉄"],["5803","フジクラ","非鉄"],
+  ["6098","リクルートHD","サービス"],["6178","日本郵政","サービス"],["6201","豊田自動織機","機械"],["6273","SMC","機械"],["6301","小松製作所","機械"],["6302","住友重機械","機械"],["6305","日立建機","機械"],["6326","クボタ","機械"],["6361","荏原製作所","機械"],["6367","ダイキン工業","機械"],["6383","ダイフク","機械"],
+  ["6471","日本精工","機械"],["6479","ミネベアミツミ","機械"],["6501","日立製作所","電機"],["6503","三菱電機","電機"],["6504","富士電機","電機"],["6506","安川電機","電機"],["6586","マキタ","電機"],["6594","日本電産","電機"],["6645","オムロン","電機"],["6701","NEC","電機"],["6702","富士通","電機"],["6723","ルネサス","電機"],["6752","パナソニックHD","電機"],["6758","ソニーG","電機"],["6762","TDK","電機"],["6841","横河電機","電機"],["6857","アドバンテスト","電機"],["6861","キーエンス","電機"],["6902","デンソー","輸送機器"],["6920","レーザーテック","電機"],["6954","ファナック","電機"],["6971","京セラ","電機"],["6981","村田製作所","電機"],["6988","日東電工","電機"],
+  ["7011","三菱重工業","機械"],["7012","川崎重工業","機械"],["7013","IHI","機械"],["7203","トヨタ自動車","輸送機器"],["7267","本田技研工業","輸送機器"],["7269","スズキ","輸送機器"],["7270","SUBARU","輸送機器"],["7272","ヤマハ発動機","輸送機器"],
+  ["7731","ニコン","精密機器"],["7733","オリンパス","精密機器"],["7741","HOYA","精密機器"],["7751","キヤノン","精密機器"],["7752","リコー","精密機器"],
+  ["7832","バンダイナムコ","その他製品"],["7974","任天堂","その他製品"],
+  ["8001","伊藤忠商事","商社"],["8002","丸紅","商社"],["8015","豊田通商","商社"],["8031","三井物産","商社"],["8053","住友商事","商社"],["8058","三菱商事","商社"],
+  ["8267","イオン","小売"],["8306","三菱UFJ FG","銀行"],["8308","りそなHD","銀行"],["8316","三井住友FG","銀行"],["8411","みずほFG","銀行"],["8473","SBI HD","証券"],["8591","オリックス","その他金融"],["8601","大和証券G","証券"],["8604","野村HD","証券"],["8630","SOMPOホールディングス","保険"],["8725","MS&ADインシュアランスG","保険"],["8750","第一生命HD","保険"],["8766","東京海上HD","保険"],
+  ["9020","JR東日本","陸運"],["9021","JR西日本","陸運"],["9022","JR東海","陸運"],["9064","ヤマトHD","陸運"],["9101","日本郵船","海運"],["9104","商船三井","海運"],["9107","川崎汽船","海運"],["9201","JAL","空運"],["9202","ANA HD","空運"],
+  ["9432","NTT","情報通信"],["9433","KDDI","情報通信"],["9434","ソフトバンク","情報通信"],["9501","東京電力HD","電気・ガス"],["9502","中部電力","電気・ガス"],["9503","関西電力","電気・ガス"],["9531","東京ガス","電気・ガス"],["9532","大阪ガス","電気・ガス"],["9613","NTTデータG","情報通信"],["9735","セコム","サービス"],["9983","ファーストリテイリング","小売"],["9984","ソフトバンクG","情報通信"],
+  ["2413","エムスリー","サービス"],["3994","マネーフォワード","情報通信"],["4385","メルカリ","情報通信"],["4755","楽天G","情報通信"],["6196","ストライク","サービス"],["7342","ウェルスナビ","証券"]
+];
+
+const STATUS_STYLES = {
+  '未確認':{bg:'#E6F1FB',color:'#0C447C'},
+  '確認済':{bg:'#EAF3DE',color:'#27500A'},
+  '気になる':{bg:'#FAEEDA',color:'#633806'},
+  '見送り':{bg:'#F1EFE8',color:'#444441'},
+};
+const KEY = 'minkab_stocks_v2';
+let stocks = JSON.parse(localStorage.getItem(KEY) || '[]');
+let currentFilter = 'all';
+let selectedStock = null;
+let ddIndex = -1;
+let ddItems = [];
+
+function save() { localStorage.setItem(KEY, JSON.stringify(stocks)); }
+
+// ブックマークレット生成（GitHub PagesのURLに書き込む）
+const PAGES_URL = location.href.replace(/\/$/, '');
+(function(){
+  const code = `javascript:(function(){
+var PAGES='${PAGES_URL}';
+var m=location.href.match(/minkabu\\.jp\\/stock\\/(\\d+)/);
+if(!m){alert('みんかぶの銘柄ページで実行してください');return;}
+var code=m[1];
+var h1=document.querySelector('h1');
+var name=h1?h1.innerText.split('\\n')[0].replace(/\\s*[（(].*$/,'').trim():'';
+var KEY='minkab_stocks_v2';
+var COLORS={未確認:{bg:'#E6F1FB',color:'#0C447C'},確認済:{bg:'#EAF3DE',color:'#27500A'},気になる:{bg:'#FAEEDA',color:'#633806'},見送り:{bg:'#F1EFE8',color:'#444441'}};
+var ALL=['未確認','気になる','確認済','見送り'];
+var existing=document.getElementById('__minkab_badge__');
+if(existing)existing.remove();
+var badge=document.createElement('div');
+badge.id='__minkab_badge__';
+badge.style.cssText='position:fixed;bottom:20px;right:20px;background:white;border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,0.18);padding:12px 16px;z-index:99999;min-width:180px;font-family:sans-serif;border:1px solid #eee;';
+var iframe=document.createElement('iframe');
+iframe.src=PAGES+'?t='+Date.now();
+iframe.style.cssText='display:none;';
+document.body.appendChild(iframe);
+var iframeReady=false;
+var pendingAction=null;
+window.addEventListener('message',function(e){
+  if(e.origin!==new URL(PAGES).origin)return;
+  if(e.data&&e.data.type==='minkab_ready'){
+    iframeReady=true;
+    if(pendingAction)doAction(pendingAction);
+  }
+  if(e.data&&e.data.type==='minkab_updated'){
+    renderBadge(e.data.stock);
+  }
+});
+function doAction(action){
+  iframe.contentWindow.postMessage(action, new URL(PAGES).origin);
+}
+function sendAction(action){
+  if(iframeReady){doAction(action);}else{pendingAction=action;}
+}
+function renderBadge(stock){
+  var sc=stock?COLORS[stock.status]:{bg:'#F1EFE8',color:'#888'};
+  var statusLabel=stock?stock.status:'未登録';
+  var btnsHtml='';
+  if(stock){
+    btnsHtml=ALL.filter(function(x){return x!==stock.status;}).map(function(x){
+      var c=COLORS[x];
+      return '<button data-action="status" data-val="'+x+'" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:'+c.bg+';color:'+c.color+';border:none;cursor:pointer;">'+x+'</button>';
+    }).join('');
+    btnsHtml+='<button data-action="remove" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:#F1EFE8;color:#888;border:none;cursor:pointer;">削除</button>';
+  }else{
+    btnsHtml='<button data-action="add" style="font-size:11px;padding:4px 12px;border-radius:20px;background:#E6F1FB;color:#0C447C;border:none;cursor:pointer;font-weight:bold;">+ リストに追加</button>';
+  }
+  badge.innerHTML='<div style="font-size:10px;color:#aaa;margin-bottom:2px;">スクリーニングリスト</div>'
+    +'<div style="font-size:12px;color:#666;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">'+code+' '+name+'</div>'
+    +'<div style="margin-bottom:8px;"><span style="display:inline-block;padding:2px 10px;border-radius:20px;background:'+sc.bg+';color:'+sc.color+';font-size:13px;font-weight:500;">'+statusLabel+'</span></div>'
+    +'<div>'+btnsHtml+'</div>'
+    +'<div style="text-align:right;margin-top:6px;"><button data-action="close" style="font-size:10px;color:#bbb;background:none;border:none;cursor:pointer;">閉じる</button></div>';
+  badge.onclick=function(e){
+    var a=e.target.dataset.action;
+    var v=e.target.dataset.val;
+    if(a==='add')sendAction({type:'minkab_add',code:code,name:name});
+    else if(a==='status')sendAction({type:'minkab_status',code:code,status:v});
+    else if(a==='remove')sendAction({type:'minkab_remove',code:code});
+    else if(a==='close'){badge.remove();iframe.remove();}
+  };
+}
+sendAction({type:'minkab_get',code:code});
+document.body.appendChild(badge);
+renderBadge(null);
+})();`.replace(/\n/g,'');
+  document.getElementById('bmLink').href = code;
+  document.getElementById('bmCode').value = code;
+})();
+
+function copyBmCode(){
+  const t = document.getElementById('bmCode');
+  navigator.clipboard.writeText(t.value).then(()=>{
+    const b = document.getElementById('copyBmBtn');
+    b.textContent='コピーしました ✓';
+    setTimeout(()=>b.textContent='コピー',2000);
+  });
+}
+
+function toggleBm(){
+  const p = document.getElementById('bmPanel');
+  p.style.display = p.style.display==='none' ? 'block' : 'none';
+}
+
+// postMessageでブックマークレットからの操作を受け取る
+window.addEventListener('message', function(e){
+  // 同一originのみ受け付ける（GitHub Pages同士）
+  if(e.origin !== location.origin) return;
+  const d = e.data;
+  if(!d || !d.type) return;
+
+  if(d.type === 'minkab_get'){
+    stocks = JSON.parse(localStorage.getItem(KEY)||'[]');
+    const stock = stocks.find(s=>s.code===d.code) || null;
+    e.source.postMessage({type:'minkab_updated', stock}, e.origin);
+    // readyも送る
+    e.source.postMessage({type:'minkab_ready'}, e.origin);
+  } else if(d.type === 'minkab_add'){
+    stocks = JSON.parse(localStorage.getItem(KEY)||'[]');
+    if(!stocks.find(s=>s.code===d.code)){
+      stocks.unshift({code:d.code,name:d.name,status:'未確認',memo:'',addedAt:new Date().toLocaleDateString('ja-JP')});
+      save(); render();
+    }
+    const stock = stocks.find(s=>s.code===d.code);
+    e.source.postMessage({type:'minkab_updated', stock}, e.origin);
+  } else if(d.type === 'minkab_status'){
+    stocks = JSON.parse(localStorage.getItem(KEY)||'[]');
+    const s = stocks.find(s=>s.code===d.code);
+    if(s){ s.status=d.status; save(); render(); }
+    e.source.postMessage({type:'minkab_updated', stock:s||null}, e.origin);
+  } else if(d.type === 'minkab_remove'){
+    stocks = JSON.parse(localStorage.getItem(KEY)||'[]');
+    stocks = stocks.filter(s=>s.code!==d.code);
+    save(); render();
+    e.source.postMessage({type:'minkab_updated', stock:null}, e.origin);
+  }
+});
+
+// iframeとして読み込まれたとき親にreadyを送る
+if(window.parent !== window){
+  window.parent.postMessage({type:'minkab_ready'}, '*');
+}
+
+function onSearchInput(){
+  const q=document.getElementById('stockSearch').value.trim();
+  selectedStock=null; document.getElementById('addBtn').disabled=true;
+  if(!q){closeDropdown();return;}
+  const lower=q.toLowerCase();
+  ddItems=STOCKS_DB.filter(([c,n])=>c.startsWith(q)||n.toLowerCase().includes(lower)).slice(0,10);
+  if(!ddItems.length){closeDropdown();return;}
+  ddIndex=-1; renderDropdown(lower);
+}
+function renderDropdown(q){
+  const dd=document.getElementById('dropdown');
+  dd.innerHTML=ddItems.map(([c,n,s],i)=>`<div class="dd-item" id="ddi-${i}" onclick="selectItem(${i})"><span class="dd-code">${hl(c,q)}</span><span class="dd-name">${hl(n,q)}</span><span class="dd-sector">${s}</span></div>`).join('');
+  dd.style.display='block';
+}
+function hl(text,q){
+  if(!q||!text)return text||'';
+  return text.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>');
+}
+function selectItem(i){
+  const[c,n]=ddItems[i]; selectedStock={code:c,name:n};
+  document.getElementById('stockSearch').value=`${c}　${n}`;
+  document.getElementById('addBtn').disabled=false; closeDropdown();
+}
+function closeDropdown(){document.getElementById('dropdown').style.display='none';ddIndex=-1;}
+function onSearchKey(e){
+  const dd=document.getElementById('dropdown');
+  if(dd.style.display==='none')return;
+  if(e.key==='ArrowDown'){e.preventDefault();ddIndex=Math.min(ddIndex+1,ddItems.length-1);updateDdActive();}
+  else if(e.key==='ArrowUp'){e.preventDefault();ddIndex=Math.max(ddIndex-1,0);updateDdActive();}
+  else if(e.key==='Enter'&&ddIndex>=0){e.preventDefault();selectItem(ddIndex);}
+  else if(e.key==='Escape'){closeDropdown();}
+}
+function updateDdActive(){
+  document.querySelectorAll('.dd-item').forEach((el,i)=>el.classList.toggle('active',i===ddIndex));
+  if(ddIndex>=0){const el=document.getElementById(`ddi-${ddIndex}`);if(el)el.scrollIntoView({block:'nearest'});}
+}
+document.addEventListener('click',e=>{
+  if(!document.getElementById('stockSearch').contains(e.target)&&!document.getElementById('dropdown').contains(e.target))closeDropdown();
+});
+function addSelected(){
+  if(!selectedStock)return;
+  const{code,name}=selectedStock;
+  if(stocks.find(s=>s.code===code)){alert(`${code}　${name} はすでに登録済みです`);return;}
+  stocks.unshift({code,name,status:document.getElementById('statusSelect').value,memo:'',addedAt:new Date().toLocaleDateString('ja-JP')});
+  save(); document.getElementById('stockSearch').value=''; document.getElementById('addBtn').disabled=true; selectedStock=null; render();
+}
+function changeStatus(code,val){const s=stocks.find(s=>s.code===code);if(s){s.status=val;save();render();}}
+function saveMemo(code,val){const s=stocks.find(s=>s.code===code);if(s){s.memo=val;save();}}
+function removeStock(code){stocks=stocks.filter(s=>s.code!==code);save();render();}
+function toggleMemo(code){const el=document.getElementById('memo-'+code);if(el)el.classList.toggle('open');}
+function setFilter(f,btn){currentFilter=f;document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();}
+function clearAll(){if(confirm('すべての銘柄を削除しますか？')){stocks=[];save();render();}}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+
+function render(){
+  stocks=JSON.parse(localStorage.getItem(KEY)||'[]');
+  const q=document.getElementById('filterSearch').value.trim().toLowerCase();
+  let filtered=currentFilter==='all'?stocks:stocks.filter(s=>s.status===currentFilter);
+  if(q)filtered=filtered.filter(s=>s.code.toLowerCase().includes(q)||(s.name||'').toLowerCase().includes(q));
+  const counts={};
+  ['未確認','確認済','気になる','見送り'].forEach(k=>counts[k]=stocks.filter(s=>s.status===k).length);
+  document.getElementById('headerCount').textContent=stocks.length?`${stocks.length}件`:'';
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat">合計 <strong>${stocks.length}</strong></div>
+    <div class="stat">未確認 <strong style="color:#1a56a0">${counts['未確認']}</strong></div>
+    <div class="stat">気になる <strong style="color:#92400E">${counts['気になる']}</strong></div>
+    <div class="stat">確認済 <strong style="color:#166534">${counts['確認済']}</strong></div>
+    <div class="stat">見送り <strong style="color:#6B6860">${counts['見送り']}</strong></div>`;
+  const list=document.getElementById('listArea');
+  const empty=document.getElementById('emptyMsg');
+  const noMatch=document.getElementById('noMatch');
+  if(stocks.length===0){list.innerHTML='';empty.style.display='block';noMatch.style.display='none';return;}
+  empty.style.display='none';
+  if(filtered.length===0){list.innerHTML='';noMatch.style.display='block';return;}
+  noMatch.style.display='none';
+  list.innerHTML=filtered.map(s=>{
+    const st=STATUS_STYLES[s.status];
+    const hasMemo=s.memo&&s.memo.trim().length>0;
+    return `<div class="stock-item">
+      <div class="stock-main">
+        <span class="s-code">${s.code}</span>
+        <span class="s-name">${hl(s.name||'—',q)}</span>
+        <select class="status-sel" onchange="changeStatus('${s.code}',this.value)" style="background:${st.bg};color:${st.color};">
+          ${['未確認','確認済','気になる','見送り'].map(v=>`<option value="${v}"${s.status===v?' selected':''}>${v}</option>`).join('')}
+        </select>
+        <button class="memo-toggle${hasMemo?' has':''}" onclick="toggleMemo('${s.code}')">${hasMemo?'メモあり':'メモ'}</button>
+        <span class="s-date">${s.addedAt}</span>
+        <a class="s-link" href="https://minkabu.jp/stock/${s.code}" target="_blank">みんかぶ ↗</a>
+        <button class="s-del" onclick="removeStock('${s.code}')">削除</button>
+      </div>
+      <div class="memo-area${hasMemo?' open':''}" id="memo-${s.code}">
+        <textarea class="memo-input" placeholder="気になったポイント、確認事項など..." oninput="saveMemo('${s.code}',this.value)">${s.memo||''}</textarea>
+      </div>
+    </div>`;
+  }).join('');
+}
+render();
+</script>
+</body>
+</html>
