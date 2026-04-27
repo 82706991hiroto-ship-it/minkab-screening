@@ -226,11 +226,12 @@ var name=h1?h1.innerText.split('\\n')[0].replace(/\\s*[（(].*$/,'').trim():'';
 var COLORS={未確認:{bg:'#E6F1FB',color:'#0C447C'},確認済:{bg:'#EAF3DE',color:'#27500A'},気になる:{bg:'#FAEEDA',color:'#633806'},見送り:{bg:'#F1EFE8',color:'#444441'}};
 var ALL=['未確認','気になる','確認済','見送り'];
 var KEY='minkab_stocks_v2';
-var existing=document.getElementById('__minkab_badge__');
+var bid='__minkab__';
+var existing=document.getElementById(bid);
 if(existing)existing.remove();
 var badge=document.createElement('div');
-badge.id='__minkab_badge__';
-badge.style.cssText='position:fixed;bottom:20px;right:20px;background:white;border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,0.18);padding:12px 16px;z-index:99999;min-width:180px;font-family:sans-serif;border:1px solid #eee;';
+badge.setAttribute('id',bid);
+badge.setAttribute('style','position:fixed;bottom:20px;right:20px;background:white;border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,0.18);padding:12px 16px;z-index:99999;min-width:180px;font-family:sans-serif;border:1px solid #eee;');
 function getStock(){
   return (JSON.parse(localStorage.getItem(KEY)||'[]')).find(function(s){return s.code===code;})||null;
 }
@@ -248,26 +249,22 @@ function renderBadge(){
   if(stock){
     btnsHtml=ALL.filter(function(x){return x!==stock.status;}).map(function(x){
       var c=COLORS[x];
-      return '<button data-action="status" data-val="'+x+'" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:'+c.bg+';color:'+c.color+';border:none;cursor:pointer;">'+x+'</button>';
+      return '<button onclick="window.__mb_status(\''+x+'\')" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:'+c.bg+';color:'+c.color+';border:none;cursor:pointer;">'+x+'</button>';
     }).join('');
-    btnsHtml+='<button data-action="remove" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:#F1EFE8;color:#888;border:none;cursor:pointer;">削除</button>';
+    btnsHtml+='<button onclick="window.__mb_remove()" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:#F1EFE8;color:#888;border:none;cursor:pointer;">削除</button>';
   }else{
-    btnsHtml='<button data-action="add" style="font-size:12px;padding:4px 14px;border-radius:20px;background:#E6F1FB;color:#0C447C;border:none;cursor:pointer;font-weight:bold;">+ リストに追加</button>';
+    btnsHtml='<button onclick="window.__mb_add()" style="font-size:12px;padding:4px 14px;border-radius:20px;background:#E6F1FB;color:#0C447C;border:none;cursor:pointer;font-weight:bold;">+ リストに追加</button>';
   }
   badge.innerHTML='<div style="font-size:10px;color:#aaa;margin-bottom:2px;">スクリーニングリスト</div>'
     +'<div style="font-size:12px;color:#666;margin-bottom:6px;">'+code+' '+name+'</div>'
     +'<div style="margin-bottom:8px;"><span style="display:inline-block;padding:2px 10px;border-radius:20px;background:'+sc.bg+';color:'+sc.color+';font-size:13px;font-weight:500;">'+statusLabel+'</span></div>'
     +'<div>'+btnsHtml+'</div>'
-    +'<div style="text-align:right;margin-top:6px;"><button data-action="close" style="font-size:10px;color:#bbb;background:none;border:none;cursor:pointer;">閉じる</button></div>';
-  badge.onclick=function(e){
-    var a=e.target.dataset.action;
-    var v=e.target.dataset.val;
-    if(a==='add')goPages('add');
-    else if(a==='status')goPages('status',v);
-    else if(a==='remove')goPages('remove');
-    else if(a==='close')badge.remove();
-  };
+    +'<div style="text-align:right;margin-top:6px;"><button onclick="window.__mb_close()" style="font-size:10px;color:#bbb;background:none;border:none;cursor:pointer;">閉じる</button></div>';
 }
+window.__mb_add=function(){goPages('add');};
+window.__mb_remove=function(){goPages('remove');};
+window.__mb_close=function(){badge.remove();};
+window.__mb_status=function(v){goPages('status',v);};
 renderBadge();
 document.body.appendChild(badge);
 })();`.replace(/\n/g,'');
