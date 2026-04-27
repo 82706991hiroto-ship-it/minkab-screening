@@ -213,8 +213,8 @@ let ddItems = [];
 
 function save() { localStorage.setItem(KEY, JSON.stringify(stocks)); }
 
-// ブックマークレット生成（GitHub PagesのURLに書き込む）
-const PAGES_URL = location.href.replace(/\/$/, '');
+// ブックマークレット生成（location.href方式 - Safari対応）
+const PAGES_URL = location.href.split('?')[0].replace(/\/$/, '');
 (function(){
   const code = `javascript:(function(){
 var PAGES='${PAGES_URL}';
@@ -223,37 +223,25 @@ if(!m){alert('みんかぶの銘柄ページで実行してください');return
 var code=m[1];
 var h1=document.querySelector('h1');
 var name=h1?h1.innerText.split('\\n')[0].replace(/\\s*[（(].*$/,'').trim():'';
-var KEY='minkab_stocks_v2';
 var COLORS={未確認:{bg:'#E6F1FB',color:'#0C447C'},確認済:{bg:'#EAF3DE',color:'#27500A'},気になる:{bg:'#FAEEDA',color:'#633806'},見送り:{bg:'#F1EFE8',color:'#444441'}};
 var ALL=['未確認','気になる','確認済','見送り'];
+var KEY='minkab_stocks_v2';
 var existing=document.getElementById('__minkab_badge__');
 if(existing)existing.remove();
 var badge=document.createElement('div');
 badge.id='__minkab_badge__';
 badge.style.cssText='position:fixed;bottom:20px;right:20px;background:white;border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,0.18);padding:12px 16px;z-index:99999;min-width:180px;font-family:sans-serif;border:1px solid #eee;';
-var iframe=document.createElement('iframe');
-iframe.src=PAGES+'?t='+Date.now();
-iframe.style.cssText='display:none;';
-document.body.appendChild(iframe);
-var iframeReady=false;
-var pendingAction=null;
-window.addEventListener('message',function(e){
-  if(e.origin!==new URL(PAGES).origin)return;
-  if(e.data&&e.data.type==='minkab_ready'){
-    iframeReady=true;
-    if(pendingAction)doAction(pendingAction);
-  }
-  if(e.data&&e.data.type==='minkab_updated'){
-    renderBadge(e.data.stock);
-  }
-});
-function doAction(action){
-  iframe.contentWindow.postMessage(action, new URL(PAGES).origin);
+function getStock(){
+  return (JSON.parse(localStorage.getItem(KEY)||'[]')).find(function(s){return s.code===code;})||null;
 }
-function sendAction(action){
-  if(iframeReady){doAction(action);}else{pendingAction=action;}
+function goPages(action,status){
+  var back=encodeURIComponent(location.href);
+  var url=PAGES+'?action='+action+'&code='+encodeURIComponent(code)+'&name='+encodeURIComponent(name)+'&back='+back;
+  if(status)url+='&status='+encodeURIComponent(status);
+  location.href=url;
 }
-function renderBadge(stock){
+function renderBadge(){
+  var stock=getStock();
   var sc=stock?COLORS[stock.status]:{bg:'#F1EFE8',color:'#888'};
   var statusLabel=stock?stock.status:'未登録';
   var btnsHtml='';
@@ -264,25 +252,24 @@ function renderBadge(stock){
     }).join('');
     btnsHtml+='<button data-action="remove" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:#F1EFE8;color:#888;border:none;cursor:pointer;">削除</button>';
   }else{
-    btnsHtml='<button data-action="add" style="font-size:11px;padding:4px 12px;border-radius:20px;background:#E6F1FB;color:#0C447C;border:none;cursor:pointer;font-weight:bold;">+ リストに追加</button>';
+    btnsHtml='<button data-action="add" style="font-size:12px;padding:4px 14px;border-radius:20px;background:#E6F1FB;color:#0C447C;border:none;cursor:pointer;font-weight:bold;">+ リストに追加</button>';
   }
   badge.innerHTML='<div style="font-size:10px;color:#aaa;margin-bottom:2px;">スクリーニングリスト</div>'
-    +'<div style="font-size:12px;color:#666;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">'+code+' '+name+'</div>'
+    +'<div style="font-size:12px;color:#666;margin-bottom:6px;">'+code+' '+name+'</div>'
     +'<div style="margin-bottom:8px;"><span style="display:inline-block;padding:2px 10px;border-radius:20px;background:'+sc.bg+';color:'+sc.color+';font-size:13px;font-weight:500;">'+statusLabel+'</span></div>'
     +'<div>'+btnsHtml+'</div>'
     +'<div style="text-align:right;margin-top:6px;"><button data-action="close" style="font-size:10px;color:#bbb;background:none;border:none;cursor:pointer;">閉じる</button></div>';
   badge.onclick=function(e){
     var a=e.target.dataset.action;
     var v=e.target.dataset.val;
-    if(a==='add')sendAction({type:'minkab_add',code:code,name:name});
-    else if(a==='status')sendAction({type:'minkab_status',code:code,status:v});
-    else if(a==='remove')sendAction({type:'minkab_remove',code:code});
-    else if(a==='close'){badge.remove();iframe.remove();}
+    if(a==='add')goPages('add');
+    else if(a==='status')goPages('status',v);
+    else if(a==='remove')goPages('remove');
+    else if(a==='close')badge.remove();
   };
 }
-sendAction({type:'minkab_get',code:code});
+renderBadge();
 document.body.appendChild(badge);
-renderBadge(null);
 })();`.replace(/\n/g,'');
   document.getElementById('bmLink').href = code;
   document.getElementById('bmCode').value = code;
@@ -309,6 +296,7 @@ function toggleBm(){
   const code = params.get('code');
   const name = params.get('name');
   const status = params.get('status');
+  const back = params.get('back');
   if(!action || !code) return;
   stocks = JSON.parse(localStorage.getItem(KEY)||'[]');
   if(action === 'add'){
@@ -325,8 +313,8 @@ function toggleBm(){
     save();
     showToast(`✓ 削除しました：${code} ${name}`);
   }
-  // URLパラメータを消してきれいにする
   history.replaceState({}, '', location.pathname);
+  if(back){ setTimeout(()=>{ location.href=decodeURIComponent(back); }, 1500); }
 })();
 
 function onSearchInput(){
