@@ -122,21 +122,36 @@
 
   <div class="bm-panel" id="bmPanel" style="display:none;">
     <div class="bm-title">
-      ブックマークレットの設定
-      <button class="toggle-bm" onclick="toggleBm()">閉じる ✕</button>
+      ブックマークレットの設定（Safari対応）
+      <button class="toggle-bm" onclick="toggleBm()">閉じる</button>
     </div>
-    <div class="bm-desc">
-      下のボタンをブックマークバーにドラッグ＆ドロップしてください。<br>
-      みんかぶの銘柄ページでクリックすると、ステータス確認・追加がこのページに反映されます。<br>
-      <strong>Safari の場合：</strong>ブックマーク登録後、編集画面でURLをコードに貼り替えてください。
+    <div style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:16px;">みんかぶの銘柄ページでワンタップ登録できます。以下の手順で一度だけ設定してください。</div>
+    <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;">
+      <div style="min-width:24px;height:24px;background:var(--text);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">1</div>
+      <div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:4px;">このページをブックマーク登録する</div>
+        <div style="font-size:12px;color:var(--text2);">Safariの共有ボタン（□↑）→「ブックマークに追加」。名前は何でもOK。</div>
+      </div>
     </div>
-    <a id="bmLink" href="" class="bm-link">⭐ みんかぶに追加</a>
-    <div class="bm-hint">← ブックマークバーへドラッグ（Safari は手動登録）</div>
-    <div style="margin-top:12px;">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;">Safari用コード（手動貼り付け）</div>
-      <textarea id="bmCode" readonly style="width:100%;height:80px;font-size:11px;font-family:monospace;border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--surface2);color:var(--text2);resize:none;"></textarea>
-      <button onclick="copyBmCode()" style="margin-top:6px;font-size:12px;padding:4px 12px;border-radius:20px;background:none;border:1px solid var(--border);cursor:pointer;font-family:'Noto Sans JP',sans-serif;" id="copyBmBtn">コピー</button>
+    <div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;">
+      <div style="min-width:24px;height:24px;background:var(--text);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">2</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;margin-bottom:4px;">ブックマークのURLをコードに書き換える</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">「ブックマーク」→「ブックマークを編集」→ 今追加したブックマークを長押し→「編集」→ URL欄を全削除して下のコードを貼り付け</div>
+        <div style="position:relative;">
+          <textarea id="bmCode" readonly style="width:100%;height:72px;font-size:10px;font-family:monospace;border:1px solid var(--border);border-radius:8px;padding:8px 90px 8px 8px;background:var(--surface2);color:var(--text2);resize:none;box-sizing:border-box;"></textarea>
+          <button id="copyBmBtn" onclick="copyBmCode()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;padding:5px 12px;border-radius:20px;background:var(--text);color:white;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">コピー</button>
+        </div>
+      </div>
     </div>
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="min-width:24px;height:24px;background:var(--text);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">3</div>
+      <div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:4px;">みんかぶで使う</div>
+        <div style="font-size:12px;color:var(--text2);">みんかぶの銘柄ページを開いて、登録したブックマークをタップ → バッジが表示されます</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;padding:10px 12px;background:#FEF3C7;border-radius:8px;font-size:12px;color:#92400E;">コピー後はSafariのブックマーク編集画面に直接貼り付けてください。メモアプリ経由だとコードが壊れることがあります。</div>
   </div>
 
   <div class="add-area">
@@ -243,13 +258,15 @@ function goPages(action,status){
 }
 function renderBadge(){
   var stock=getStock();
-  var sc=stock?COLORS[stock.status]:{bg:'#F1EFE8',color:'#888'};
+  var scBg=stock?COLORS[stock.status]['bg']:'#F1EFE8';
+  var scColor=stock?COLORS[stock.status]['color']:'#888';
   var statusLabel=stock?stock.status:'未登録';
   var btnsHtml='';
   if(stock){
     btnsHtml=ALL.filter(function(x){return x!==stock.status;}).map(function(x){
-      var c=COLORS[x];
-      return '<button onclick="window.__mb_status(\''+x+'\')" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:'+c.bg+';color:'+c.color+';border:none;cursor:pointer;">'+x+'</button>';
+      var cBg=COLORS[x]['bg'];
+      var cColor=COLORS[x]['color'];
+      return '<button onclick="window.__mb_status(\''+x+'\')" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:'+cBg+';color:'+cColor+';border:none;cursor:pointer;">'+x+'</button>';
     }).join('');
     btnsHtml+='<button onclick="window.__mb_remove()" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:#F1EFE8;color:#888;border:none;cursor:pointer;">削除</button>';
   }else{
@@ -257,7 +274,7 @@ function renderBadge(){
   }
   badge.innerHTML='<div style="font-size:10px;color:#aaa;margin-bottom:2px;">スクリーニングリスト</div>'
     +'<div style="font-size:12px;color:#666;margin-bottom:6px;">'+code+' '+name+'</div>'
-    +'<div style="margin-bottom:8px;"><span style="display:inline-block;padding:2px 10px;border-radius:20px;background:'+sc.bg+';color:'+sc.color+';font-size:13px;font-weight:500;">'+statusLabel+'</span></div>'
+    +'<div style="margin-bottom:8px;"><span style="display:inline-block;padding:2px 10px;border-radius:20px;background:'+scBg+';color:'+scColor+';font-size:13px;font-weight:500;">'+statusLabel+'</span></div>'
     +'<div>'+btnsHtml+'</div>'
     +'<div style="text-align:right;margin-top:6px;"><button onclick="window.__mb_close()" style="font-size:10px;color:#bbb;background:none;border:none;cursor:pointer;">閉じる</button></div>';
 }
