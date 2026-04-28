@@ -258,15 +258,13 @@ function goPages(action,status){
 }
 function renderBadge(){
   var stock=getStock();
-  var scBg=stock?COLORS[stock.status]['bg']:'#F1EFE8';
-  var scColor=stock?COLORS[stock.status]['color']:'#888';
+  var sc=stock?COLORS[stock.status]:{bg:'#F1EFE8',color:'#888'};
   var statusLabel=stock?stock.status:'未登録';
   var btnsHtml='';
   if(stock){
     btnsHtml=ALL.filter(function(x){return x!==stock.status;}).map(function(x){
-      var cBg=COLORS[x]['bg'];
-      var cColor=COLORS[x]['color'];
-      return '<button onclick="window.__mb_status(\''+x+'\')" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:'+cBg+';color:'+cColor+';border:none;cursor:pointer;">'+x+'</button>';
+      var c=COLORS[x];
+      return '<button onclick="window.__mb_status(\''+x+'\')" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:'+c.bg+';color:'+c.color+';border:none;cursor:pointer;">'+x+'</button>';
     }).join('');
     btnsHtml+='<button onclick="window.__mb_remove()" style="font-size:11px;padding:2px 8px;margin:2px;border-radius:20px;background:#F1EFE8;color:#888;border:none;cursor:pointer;">削除</button>';
   }else{
@@ -274,7 +272,7 @@ function renderBadge(){
   }
   badge.innerHTML='<div style="font-size:10px;color:#aaa;margin-bottom:2px;">スクリーニングリスト</div>'
     +'<div style="font-size:12px;color:#666;margin-bottom:6px;">'+code+' '+name+'</div>'
-    +'<div style="margin-bottom:8px;"><span style="display:inline-block;padding:2px 10px;border-radius:20px;background:'+scBg+';color:'+scColor+';font-size:13px;font-weight:500;">'+statusLabel+'</span></div>'
+    +'<div style="margin-bottom:8px;"><span style="display:inline-block;padding:2px 10px;border-radius:20px;background:'+sc.bg+';color:'+sc.color+';font-size:13px;font-weight:500;">'+statusLabel+'</span></div>'
     +'<div>'+btnsHtml+'</div>'
     +'<div style="text-align:right;margin-top:6px;"><button onclick="window.__mb_close()" style="font-size:10px;color:#bbb;background:none;border:none;cursor:pointer;">閉じる</button></div>';
 }
